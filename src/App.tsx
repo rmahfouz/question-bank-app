@@ -298,9 +298,9 @@ const App: React.FC = () => {
               <p
                 className="highlighted-text"
                 style={{ padding: '4px 0', borderRadius: 4, cursor: 'pointer', fontSize: TEXT_SIZES[textSizeIdx] }}
-                onMouseUp={e => handleHighlight(e, q.explanation, 'explanation')} // Pass 'explanation' type
+                onMouseUp={e => handleHighlight(e, q.explanation, 'explanation')}
               >
-                {renderHighlighted(q.explanation, explanationHighlights)} // Pass explanationHighlights
+                {renderHighlighted(q.explanation, explanationHighlights)}
               </p>
               <button onClick={nextQuestion} disabled={current === questions.length - 1} style={{ background: '#23408e', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 24px', fontWeight: 600, marginTop: 8 }}>
                 Next Question
