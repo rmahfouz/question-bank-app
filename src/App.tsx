@@ -108,25 +108,38 @@ const App: React.FC = () => {
   };
 
   // Highlight text by click and drag
-  const handleHighlight = (e: React.MouseEvent<HTMLDivElement>, text: string, type: 'question' | 'explanation' = 'question') => {
+  const handleHighlight = (e: React.MouseEvent<HTMLDivElement>, originalText: string, type: 'question' | 'explanation' = 'question') => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
 
     const range = selection.getRangeAt(0);
     const container = e.currentTarget;
 
-    // Calculate start and end offsets relative to the container's text content
     let start = 0;
     let end = 0;
 
-    // Create a temporary range to measure the offset from the beginning of the container to the start of the selection
-    const preSelectionRange = document.createRange();
-    preSelectionRange.selectNodeContents(container);
-    preSelectionRange.setEnd(range.startContainer, range.startOffset);
-    start = preSelectionRange.toString().length;
+    // Function to calculate the absolute offset within the originalText
+    const getAbsoluteOffset = (node: Node, offset: number) => {
+      let currentOffset = 0;
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
 
-    // Calculate the end offset
-    end = start + selection.toString().length;
+      while (walker.nextNode()) {
+        const textNode = walker.currentNode;
+        if (textNode === node) {
+          return currentOffset + offset;
+        }
+        currentOffset += textNode.textContent?.length || 0;
+      }
+      return -1; // Should not happen if node is within container
+    };
+
+    start = getAbsoluteOffset(range.startContainer, range.startOffset);
+    end = getAbsoluteOffset(range.endContainer, range.endOffset);
+
+    // Ensure start is always less than or equal to end
+    if (start > end) {
+      [start, end] = [end, start];
+    }
 
     if (type === 'question') {
       setHighlights(prev => [...prev, { start, end }]);
