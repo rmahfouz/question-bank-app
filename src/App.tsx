@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [striked, setStriked] = useState<string[]>([]);
   const [highlights, setHighlights] = useState<{start: number, end: number}[]>([]);
+  const [explanationHighlights, setExplanationHighlights] = useState<{start: number, end: number}[]>([]);
   const [textSizeIdx, setTextSizeIdx] = useState<number>(DEFAULT_TEXT_SIZE_INDEX);
   const explanationRef = React.useRef<HTMLDivElement>(null);
 
@@ -65,6 +66,7 @@ const App: React.FC = () => {
   if (questions.length === 0) return <div>Loading...</div>;
 
   const q = questions[current];
+  const isCorrect = selected === q.correct_option;
 
   // Left click: select answer, do not submit
   const handleSelect = (option: string) => {
@@ -84,6 +86,7 @@ const App: React.FC = () => {
     setShowExplanation(false);
     setStriked([]);
     setHighlights([]);
+    setExplanationHighlights([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -93,6 +96,7 @@ const App: React.FC = () => {
     setShowExplanation(false);
     setStriked([]);
     setHighlights([]);
+    setExplanationHighlights([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -104,7 +108,7 @@ const App: React.FC = () => {
   };
 
   // Highlight text by click and drag
-  const handleHighlight = (e: React.MouseEvent<HTMLDivElement>, text: string) => {
+  const handleHighlight = (e: React.MouseEvent<HTMLDivElement>, text: string, type: 'question' | 'explanation' = 'question') => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
     const selectedText = selection.toString().trim();
@@ -117,16 +121,21 @@ const App: React.FC = () => {
     const start = text.indexOf(selectedText, preSelectionRange.toString().length);
     
     if (start === -1) return;
-    setHighlights(prev => [...prev, { start, end: start + selectedText.length }]);
+
+    if (type === 'question') {
+      setHighlights(prev => [...prev, { start, end: start + selectedText.length }]);
+    } else {
+      setExplanationHighlights(prev => [...prev, { start, end: start + selectedText.length }]);
+    }
     selection.removeAllRanges();
   };
 
   // Render highlighted text
-  const renderHighlighted = (text: string) => {
-    if (highlights.length === 0) return text;
+  const renderHighlighted = (text: string, highlightsArray: {start: number, end: number}[] = highlights) => {
+    if (highlightsArray.length === 0) return text;
     let parts: (string | JSX.Element)[] = [];
     let last = 0;
-    highlights.forEach(({ start, end }, i) => {
+    highlightsArray.forEach(({ start, end }, i) => {
       if (start > last) parts.push(text.slice(last, start));
       parts.push(<span key={i} className="highlighted-text" style={{ background: '#ffe066' }}>{text.slice(start, end)}</span>);
       last = end;
@@ -279,13 +288,19 @@ const App: React.FC = () => {
           </div>
           {showExplanation && (
             <div ref={explanationRef} style={{ marginTop: 20, border: '1px solid #d1d5db', borderRadius: 4, padding: 16, background: '#f7f8fa' }}>
+              <h3 style={{ color: isCorrect ? '#28a745' : '#dc3545', marginBottom: 10 }}>
+                {isCorrect ? 'Correct!' : 'Incorrect.'}
+              </h3>
+              <p style={{ fontWeight: 'bold', marginBottom: 10 }}>
+                Correct Answer: {q.correct_option}
+              </p>
               <strong>Explanation:</strong>
               <p
                 className="highlighted-text"
                 style={{ padding: '4px 0', borderRadius: 4, cursor: 'pointer', fontSize: TEXT_SIZES[textSizeIdx] }}
-                onMouseUp={e => handleHighlight(e, q.explanation)}
+                onMouseUp={e => handleHighlight(e, q.explanation, 'explanation')} // Pass 'explanation' type
               >
-                {renderHighlighted(q.explanation)}
+                {renderHighlighted(q.explanation, explanationHighlights)} // Pass explanationHighlights
               </p>
               <button onClick={nextQuestion} disabled={current === questions.length - 1} style={{ background: '#23408e', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 24px', fontWeight: 600, marginTop: 8 }}>
                 Next Question
