@@ -111,21 +111,27 @@ const App: React.FC = () => {
   const handleHighlight = (e: React.MouseEvent<HTMLDivElement>, text: string, type: 'question' | 'explanation' = 'question') => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed) return;
-    const selectedText = selection.toString().trim();
-    if (!selectedText) return;
-    
+
     const range = selection.getRangeAt(0);
-    const preSelectionRange = range.cloneRange();
-    preSelectionRange.selectNodeContents(e.currentTarget);
+    const container = e.currentTarget;
+
+    // Calculate start and end offsets relative to the container's text content
+    let start = 0;
+    let end = 0;
+
+    // Create a temporary range to measure the offset from the beginning of the container to the start of the selection
+    const preSelectionRange = document.createRange();
+    preSelectionRange.selectNodeContents(container);
     preSelectionRange.setEnd(range.startContainer, range.startOffset);
-    const start = text.indexOf(selectedText, preSelectionRange.toString().length);
-    
-    if (start === -1) return;
+    start = preSelectionRange.toString().length;
+
+    // Calculate the end offset
+    end = start + selection.toString().length;
 
     if (type === 'question') {
-      setHighlights(prev => [...prev, { start, end: start + selectedText.length }]);
+      setHighlights(prev => [...prev, { start, end }]);
     } else {
-      setExplanationHighlights(prev => [...prev, { start, end: start + selectedText.length }]);
+      setExplanationHighlights(prev => [...prev, { start, end }]);
     }
     selection.removeAllRanges();
   };
