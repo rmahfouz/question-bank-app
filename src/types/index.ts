@@ -1,11 +1,15 @@
+export interface Choice {
+  label: string;
+  text: string;
+}
+
 export interface Question {
   id: string;
   question: string;
-  option1: string;
-  option2: string;
-  option3: string;
-  option4: string;
-  correct_option: string;
+  choices: Choice[];
+  correct_answer: string;
+  abim_content_category: string;
   explanation: string;
+  references: string[];
   imageUrl?: string;
 }
